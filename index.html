@@ -1,0 +1,177 @@
+<html>
+<link rel="stylesheet" type="text/css" href="ruzzle-solver.css"></link>
+<script src="ruzzle-solver.js"></script>
+<script src="ruzzle-graph.js"></script>
+<script src="compressed-trie.js"></script>
+<script src="dict-words.js"></script>
+ <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> 
+<script>
+ $(document).ready(function() {
+ 	var DIRECTION_COORDS = {'LEFT': {'top': '40px', 'left':'-25px', 'pic':'images/arrow-left.png'}, 
+ 							'RIGHT': {'top': '40px', 'left':'85px', 'pic': 'images/arrow-right.png'},
+ 							'TOP': {'top': '-25px', 'left':'30px', 'pic': 'images/arrow-top.png'},
+ 							'BOTTOM': {'top': '105px', 'left':'30px', 'pic': 'images/arrow-bottom.png'},
+ 							'TOP_LEFT': {'top': '-25px', 'left':'-25px', 'pic': 'images/arrow-top-left.png'},
+ 							'TOP_RIGHT': {'top': '-25px', 'left':'85px', 'pic': 'images/arrow-top-right.png'},
+ 							'BOTTOM_LEFT': {'top': '105px', 'left':'-25px', 'pic': 'images/arrow-bottom-left.png'},
+ 							'BOTTOM_RIGHT': {'top': '105px', 'left':'85px', 'pic': 'images/arrow-bottom-right.png'}}
+ 	var CURRENT_ID = 0;
+ 	var INPUT_STR = '';
+ 	focusOnSquare();
+
+ 	$('.ruzzle-board-square').keypress(function(event) {
+ 		event.preventDefault();
+
+ 		if (isLetter(event.charCode)) {
+ 			var enteredLetter = String.fromCharCode(event.charCode).toUpperCase();
+ 			INPUT_STR += enteredLetter;
+ 			$("#square-"+CURRENT_ID+"-text").text(enteredLetter);
+ 			this.contentEditable = false;
+ 			CURRENT_ID ++;
+ 			focusOnSquare();
+
+ 			if (CURRENT_ID > 15) {
+ 				findWords(INPUT_STR);
+ 			}
+
+ 		} else {
+ 			//TODO: throw some error
+ 		}
+
+ 	});
+
+ 	function focusOnSquare () {
+ 		$('#square-'+CURRENT_ID).focus();
+ 	}
+
+ 	function isLetter(code) {
+ 		if (code >= 65 && code <= 90){
+ 			return true;
+ 		} else if (code >= 97 && code <= 122) {
+ 			return true;
+ 		}
+
+ 		return false;
+ 	}	
+
+ 	function findWords(inputStr) {
+ 		var wordList = solveRuzzle(inputStr.toLowerCase())
+
+ 		displayWordsOnBoard(wordList.candidatePathList, wordList.candidateList);
+ 	}
+
+ 	function displayWordsOnBoard(wordNumMappings, words) {
+ 		var index = 0; 
+
+		displayWord(wordNumMappings[index], words[index]);
+
+ 		var interval = setInterval(iterator, 5000);
+
+ 		function iterator() {
+ 			clearWord(wordNumMappings[index]);
+ 			index ++;
+ 			displayWord(wordNumMappings[index], words[index]);
+
+ 			if (index === wordNumMappings.length) {
+ 				clearInterval(interval);
+ 			}
+ 		}
+ 	}
+
+ 	// Param: wordPath - a list of letters
+ 	function displayWord(wordPath, word) {
+ 		var directions = getWordPathDirections(wordPath);
+ 		
+ 		for (var i = 0; i < wordPath.length - 1; i++) {
+ 			console.log("i: ", i);
+ 			if (wordPath[i] === ',') continue;
+
+ 			if (i == 0) {		
+ 				var square = $("#square-"+wordPath[i]).css('background-color', 'rgb(244, 180, 80)');
+ 			} else {
+ 				var square = $("#square-"+wordPath[i]).css('background-color', 'rgb(255, 225, 104)');
+ 			}
+
+ 			var directionLabel = $('<div class=direction-arrow-div></div>').css('top', DIRECTION_COORDS[directions[i]]['top'])
+ 				.css('left', DIRECTION_COORDS[directions[i]]['left']);
+
+ 			directionLabel.append($('<img class=arrow-pic src='+DIRECTION_COORDS[directions[i]]['pic']+' />'));
+
+ 			square.append(directionLabel);
+ 		}
+
+ 		$("#square-"+wordPath[wordPath.length - 1]).css('background-color', 'rgb(255, 225, 104)');
+
+ 		$("#word-list-div").append('<div class="word-div"> '+word+' </div>')
+ 	}
+
+ 	function clearWord(wordPath) {
+ 		$('div').remove('.direction-arrow-div');
+
+ 		for (var i = 0; i < wordPath.length; i++) {
+
+ 			if (wordPath[i] === ',') continue;
+
+ 			var square = $("#square-"+wordPath[i]).css('background-color', 'rgb(255, 255, 255)');
+ 		}
+ 	}
+ 	
+ });
+
+</script>
+<body>
+	<div id="ruzzle-board-container">
+		<div id="square-0" class="ruzzle-board-square" contentEditable=true> 
+			<div id="square-0-text" class="square-text-div"></div>
+		</div>
+		<div id="square-1" class="ruzzle-board-square" contentEditable=true>
+			<div id="square-1-text" class="square-text-div"></div>
+		</div>
+		<div id="square-2" class="ruzzle-board-square" contentEditable=true>
+			<div id="square-2-text" class="square-text-div"></div>
+		</div>
+		<div id="square-3" class="ruzzle-board-square" contentEditable=true>
+			<div id="square-3-text" class="square-text-div"></div>
+		</div>
+		<div id="square-4" class="ruzzle-board-square" contentEditable=true>
+			<div id="square-4-text" class="square-text-div"></div>
+		</div>
+		<div id="square-5" class="ruzzle-board-square" contentEditable=true>
+			<div id="square-5-text" class="square-text-div"></div>
+		</div>
+		<div id="square-6" class="ruzzle-board-square" contentEditable=true>
+			<div id="square-6-text" class="square-text-div"></div>
+		</div>
+		<div id="square-7" class="ruzzle-board-square" contentEditable=true>
+			<div id="square-7-text" class="square-text-div"></div>
+		</div>
+		<div id="square-8" class="ruzzle-board-square" contentEditable=true>
+			<div id="square-8-text" class="square-text-div"></div>
+		</div>
+		<div id="square-9" class="ruzzle-board-square" contentEditable=true>
+			<div id="square-9-text" class="square-text-div"></div>
+		</div>
+		<div id="square-10" class="ruzzle-board-square" contentEditable=true>
+			<div id="square-10-text" class="square-text-div"></div>
+		</div>
+		<div id="square-11" class="ruzzle-board-square" contentEditable=true>
+			<div id="square-11-text" class="square-text-div"></div>
+		</div>
+		<div id="square-12" class="ruzzle-board-square" contentEditable=true>
+			<div id="square-12-text" class="square-text-div"></div>
+		</div>
+		<div id="square-13" class="ruzzle-board-square" contentEditable=true>
+			<div id="square-13-text" class="square-text-div"></div>
+		</div>
+		<div id="square-14" class="ruzzle-board-square" contentEditable=true>
+			<div id="square-14-text" class="square-text-div"></div>
+		</div>
+		<div id="square-15" class="ruzzle-board-square" contentEditable=true>
+			<div id="square-15-text" class="square-text-div"></div>
+		</div>
+	</div>
+	<div id="word-list-div">
+
+	</div>
+</body>
+</html>
